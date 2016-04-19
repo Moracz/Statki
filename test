@@ -1,0 +1,121 @@
+#include <targets/AT91SAM7.h>
+#include "usart.h"
+#include "lcd.h"
+#include "adc.h"
+
+#define AUDIO_OUT PIOB_SODR_P19 //
+#define LCD_BACKLIGHT PIOB_SODR_P20
+#define SW_1 PIOB_SODR_P24 // lewy przycisk
+#define SW_2 PIOB_SODR_P25 // prawy przycisk
+#define J_UP PIOA_SODR_P9 // lewy przycisk
+#define J_DOWN PIOA_SODR_P8 // prawy przycisk
+#define J_LEFT PIOA_SODR_P7 // prawy przycisk
+#define J_RIGHT PIOA_SODR_P14 // prawy przycisk
+#define J_CP PIOA_SODR_P15 // prawy przycisk
+
+
+
+__attribute__ ((section(".fast"))); // konfiguracja delay
+void delay(int n) {
+    volatile int i;
+    for (i = 3000 * n; i > 0; i--) {
+        __asm__("nop");
+    }
+}
+ 
+void print_menu() {
+    int x=10;
+    LCDClearScreen();
+    for(int i=0 ; i<5 ; ++i)
+    {
+      int y=10;
+      for(int j=0 ; j<5 ; ++j)
+        {
+          LCDPutStr("PO", x, y, LARGE, WHITE, BLACK);
+          y+=20;
+        }
+      x+=20;
+    }
+}
+
+
+
+
+int stan() //funkcja sprawdza, który przycisk został wciśnięty
+{
+  if( (PIOA_PDSR & J_LEFT) == 0)
+  {
+    return 1;
+  }
+  if( (PIOA_PDSR & J_CP) == 0)
+  {
+    return 2;
+  }
+  if( (PIOA_PDSR & J_UP) == 0)
+  {
+    return 3;
+  }
+  if( (PIOA_PDSR & J_RIGHT) == 0)
+  {
+    return 4;
+  }
+  if( (PIOA_PDSR & J_DOWN) == 0)
+  {
+   return 5;
+  }
+  return 0;
+}
+
+
+
+int main() {
+    InitADC(); // inicjalizacja ADC
+    InitUSART1();
+    InitUSART0();
+
+    PMC_PCER=PMC_PCER_PIOB | PMC_PCER_PIOA;
+    PIOB_OER=LCD_BACKLIGHT | AUDIO_OUT;
+    PIOB_PER=LCD_BACKLIGHT | AUDIO_OUT;
+    PIOA_ODR=0xFFFFFFFF;
+    InitLCD();
+    LCDSettings(); //inicjalizacja LCD
+    LCDClearScreen(); //ustawienie LCD
+    PIOB_SODR|=LCD_BACKLIGHT;
+
+    char *bufor;
+    bufor = (char *) malloc(40);
+   
+  print_menu();
+  char gdzie_X=0;
+  char gdzie_Y=0;
+  int akceptuj=0;
+  while(1)
+  {
+  
+    switch (stan())
+    {
+      case 1:
+        gdzie_X-=1;
+      break;
+      case 2:
+        akceptuj=1;
+      break;
+      case 3:
+        gdzie_Y-=1;
+      break;
+      case 4:
+        gdzie_X+=1;
+      break;
+      case 5:
+        gdzie_Y+=1;
+      break;
+      default:
+      break;
+    }
+    print_menu();
+    LCDPutStr("XX",10+gdzie_Y*20,10+gdzie_X*20,LARGE,BLACK,WHITE);
+    }
+
+
+    return 0;
+}
