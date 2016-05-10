@@ -1,0 +1,178 @@
+ #include <targets/AT91SAM7.h>
+ #include"adc.h"
+ #include"lcd.h"
+ #define AUDIO_OUT PIOB_SODR_P19
+ #define SW_1 PIOB_SODR_P24 // lewy przycisk
+ #define SW_2 PIOB_SODR_P25 // prawy przycisk
+ #define J_UP PIOA_SODR_P9 // lewy przycisk
+ #define J_DOWN PIOA_SODR_P8 // prawy przycisk
+ #define J_LEFT PIOA_SODR_P7 // prawy przycisk
+ #define J_RIGHT PIOA_SODR_P14 // prawy przycisk
+ #define J_CP PIOA_SODR_P15 // prawy przycisk
+ #define LCD_BACKLIGHT PIOB_SODR_P20
+
+ __attribute__ ((section(".fast"))); // konfiguracja delay
+   void delay(int n){
+     volatile int i;
+     for(i=3000*n; i>0; i--){
+     __asm__("nop");
+   }
+ }
+
+void pole(int x)
+  {
+    int wiersz;
+    int kolumna;
+    wiersz = x/5;
+    kolumna = x%5;
+
+    
+        switch (kolumna)
+     {
+      
+       case 0:
+       czysc();
+          LCDPutStr("PO",(wiersz+1)*10,10,LARGE,BLACK,WHITE);
+       break;
+       case 1:
+       czysc();
+         LCDPutStr("PO",(wiersz+1)*10,30,LARGE,BLACK,WHITE);
+       break;
+       case 2:
+       czysc();
+         LCDPutStr("PO",(wiersz+1)*10,50,LARGE,BLACK,WHITE);
+       break;
+       case 3:
+       czysc();
+        LCDPutStr("PO",(wiersz+1)*10,70,LARGE,BLACK,WHITE);
+       break;
+       case 4:
+       czysc();
+         LCDPutStr("PO",(wiersz+1)*10,90,LARGE,BLACK,WHITE);
+       break;
+     
+      
+     }
+    
+   
+
+  }
+
+
+ void graj(int g) //funkcja odpowiadająca za wydawanie dźwięku przez buzzer
+ {
+    PIOB_SODR|=AUDIO_OUT; //ustawienie pinu P19 na 1
+    delay(g);
+    PIOB_CODR|=AUDIO_OUT; //ustawienie pinu P19 na 0
+    delay(g);
+ }
+
+ void czysc()
+ {  
+     int x=10;
+    
+
+    for(int i=0 ; i<5 ; ++i)
+    {
+      int y=10;
+      for(int j=0 ; j<5 ; ++j)
+        {
+          LCDPutStr("PO", x, y, LARGE, WHITE, BLACK);
+          y+=20;
+        }
+      x+=20;
+    }
+
+  /* int i=15;
+   while(i<90)
+   {
+     LCDPutStr("1",i,5,LARGE,WHITE,BLACK);
+     LCDPutStr("2",i,20,LARGE,WHITE,BLACK);
+     LCDPutStr("3",i,35,LARGE,WHITE,BLACK);
+     LCDPutStr("4",i,50,LARGE,WHITE,BLACK);
+     LCDPutStr("5",i,65,LARGE,WHITE,BLACK);
+     i+=15;
+   }*/
+   
+
+ 
+ }
+
+
+ int stan() //funkcja sprawdza, który przycisk został wciśnięty
+ {
+   if( (PIOA_PDSR & J_LEFT) == 0)
+   {
+     return 1;
+   }
+   if( (PIOA_PDSR & J_CP) == 0)
+   {
+     return 2;
+   }
+   if( (PIOA_PDSR & J_UP) == 0)
+   {
+     return 3;
+   }
+   if( (PIOA_PDSR & J_RIGHT) == 0)
+   {
+     return 4;
+   }
+   if( (PIOA_PDSR & J_DOWN) == 0)
+   {
+    return 5;
+   }
+   //return 0;
+ }
+char* fahr;
+
+ int main()
+ {
+   PMC_PCER=PMC_PCER_PIOB | PMC_PCER_PIOA;
+   PIOB_OER=LCD_BACKLIGHT | AUDIO_OUT;
+   PIOB_PER=LCD_BACKLIGHT | AUDIO_OUT;
+   PIOA_ODR=0xFFFFFFFF;
+   InitLCD();
+   LCDSettings(); //inicjalizacja LCD
+   LCDClearScreen(); //ustawienie LCD
+   PIOB_SODR|=LCD_BACKLIGHT;
+
+   czysc();
+   int wiersz=0;
+   int akceptuj=0;
+
+   while(1)
+   {
+
+     switch (stan())
+     {
+       case 1://lewo
+         if(wiersz != 0)
+         wiersz-=1;
+       break;
+       case 2:
+         akceptuj=1;
+       break;
+       case 3://up
+       if(wiersz >4)
+         wiersz-=5;
+       break;
+       case 4://prawo
+          if(wiersz != 24)
+            wiersz+=1;
+       break;
+       case 5://down
+        if(wiersz<20)
+         wiersz+=5;
+       break;
+       default:
+       break;
+     }
+
+     
+
+    pole(wiersz);
+
+   }
+   return 0;
+ }
+//dokoncz to kurwa rozjezdza sie
