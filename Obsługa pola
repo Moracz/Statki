@@ -1,0 +1,36 @@
+ int pole[25];
+ for(int i=0;i<25;i++)
+ {
+ pole[i]=0;
+ }
+
+void zamien(int x)
+  {
+    int wiersz;
+    int kolumna;
+    wiersz = x/5;
+    kolumna = x%5;
+  }
+
+void statek(int a, int b){
+  int x=10+a*20;
+  int y=10+b*20;
+  LCDPutStr("YY", x, y, LARGE, WHITE, BLUE);
+}
+
+void trafienie(int a, int b) {  
+  int x=10+a*20;
+  int y=10+b*20;
+  LCDPutStr("XX", x, y, LARGE, WHITE, BLACK);
+}
+
+void pudlo(int a, int b) {
+  int x=10+a*20;
+  int y=10+b*20;
+  LCDPutStr("YY", x, y, LARGE, WHITE, RED);
+}
+
+void ustaw(int x)
+  {
+    pole[x]=1;
+  }
